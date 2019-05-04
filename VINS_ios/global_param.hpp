@@ -17,6 +17,7 @@ enum DeviceType
     iPhone6s,
     iPadPro97,
     iPadPro129,
+    iPhoneX,
     unDefine
 };
 //extrinsic param

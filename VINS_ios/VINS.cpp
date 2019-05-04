@@ -8,6 +8,7 @@
 
 #include "VINS.hpp"
 
+
 bool LOOP_CLOSURE = true;
 
 VINS::VINS()
@@ -401,6 +402,20 @@ void VINS::processImage(map<int, Vector3d> &image_msg, double header, int buf_nu
         {
             if(track_num < 20)
             {
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                printf("I need to restart my application =================================\n");
+                
+                
                 clearState();
                 return;
             }

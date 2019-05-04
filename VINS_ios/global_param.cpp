@@ -88,6 +88,23 @@ bool setGlobalParam(DeviceType device)
             TIC_Z = 0.0;
             return true;
             break;
+        
+        case iPhoneX:
+            printf("Device iPhone6sP param\n");
+            FOCUS_LENGTH_X = 547.565;
+            FOCUS_LENGTH_Y = 547.998;
+            PX = 239.033;
+            PY = 309.452;
+            
+            SOLVER_TIME = 0.06;
+            FREQ = 3;
+            
+            //extrinsic param
+            TIC_X = 0.0;
+            TIC_Y = 0.065;
+            TIC_Z = 0.0;
+            return true;
+            break;
             
         case iPadPro97:
             printf("Device ipad97 param\n");
