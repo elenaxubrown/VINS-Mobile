@@ -11,6 +11,9 @@
 #import "CameraUtils.h"
 
 @interface ViewController ()
+
+
+
 @property (weak, nonatomic) IBOutlet UILabel *X_label;
 @property (weak, nonatomic) IBOutlet UILabel *Y_label;
 @property (weak, nonatomic) IBOutlet UILabel *Z_label;
@@ -101,6 +104,8 @@ float y_view_last = -5000;
 float z_view_last = -5000;
 
 float total_odom = 0;
+
+//bool show_global_caution = false;
 
 /******************************* UI CONFIG *******************************/
 
@@ -204,6 +209,10 @@ bool cameraMode = true;
 // Implied, updated by updateCameraMode()
 bool imageCacheEnabled = cameraMode && !USE_PNP;
 
+//-(void)dismiss:(UIAlertView*)alert
+//{
+//    [alert dismissWithClickedButtonIndex:0 animated:YES];
+//}
 
 // MARK: ViewController Methods
 
@@ -294,6 +303,7 @@ bool imageCacheEnabled = cameraMode && !USE_PNP;
     }
     
     /************************************Device and iOS version check************************************/
+    
     bool deviceCheck = setGlobalParam(deviceName());
     if(!deviceCheck)
     {
@@ -343,6 +353,7 @@ bool imageCacheEnabled = cameraMode && !USE_PNP;
         frameSize = cv::Size(videoCamera.imageWidth,
                              videoCamera.imageHeight);
     }
+    
 }
 
 /*
@@ -396,10 +407,14 @@ Matrix3d pnp_R;
         {
             //TS(readImg);
             bool still_play;
-            still_play = [self readImageTime:imageDataReadIndex];
+            bool extractedExpr = [self readImageTime:imageDataReadIndex];
+            still_play = extractedExpr;
             [self readImage:imageDataReadIndex];
-            if(!still_play)
+            if(!still_play){
+                printf("======================I am not playing now!=========================");
                 return;
+            }
+            
             imageDataReadIndex++;
 #ifdef DATA_EXPORT
             [self tapSaveImageToIphone:imgData.image];
@@ -730,6 +745,7 @@ bool start_global_optimization = false;
         //update feature position for front-end
         if(vins.solver_flag == vins.NON_LINEAR)
         {
+            printf("I am in ViewCOntroller.mm line 733\n");
             m_depth_feedback.lock();
             solved_vins.header = vins.Headers[WINDOW_SIZE - 1];
             solved_vins.Ba = vins.Bas[WINDOW_SIZE - 1];
@@ -759,6 +775,7 @@ bool start_global_optimization = false;
         
         if(imageCacheEnabled)
         {
+            printf("I am in ViewCOntroller.mm line 763\n");
             //add state into vins buff for alignwith image
             if(vins.solver_flag == VINS::NON_LINEAR && start_show)
             {
@@ -785,11 +802,35 @@ bool start_global_optimization = false;
          **/
         if(LOOP_CLOSURE)
         {
+            printf("I am in ViewController.mm line 790\n");
             static bool first_frame = true;
-            if(vins.solver_flag != vins.NON_LINEAR)
+            if(vins.solver_flag != vins.NON_LINEAR){
+                printf("I'm in ViewController.mm line 793\n");
                 first_frame = true;
+                
+                //if (show_global_caution == false){
+                    //show_global_caution = true;
+                UIAlertController *alertRestart = [UIAlertController alertControllerWithTitle:@"Caution"
+                                                                                      message:@"Please do not shake the phone, otherwise the application would reinitialize! Click OK button once the initialization finished." preferredStyle:UIAlertControllerStyleAlert];
+                
+                UIAlertAction *okAction = [UIAlertAction
+                                           actionWithTitle:@"OK"
+                                           style:UIAlertActionStyleDefault
+                                           handler:^(UIAlertAction * _Nonnull action) {
+                                               //show_global_caution = false;
+                                           }];
+                
+                [alertRestart addAction:okAction];
+                dispatch_async(dispatch_get_main_queue(), ^ {
+                    //show_global_caution = true;
+                    [self presentViewController:alertRestart animated:YES completion:nil];
+                });
+                //}
+                
+            }
             if(vins.marginalization_flag == vins.MARGIN_OLD && vins.solver_flag == vins.NON_LINEAR && !image_buf_loop.empty())
             {
+                printf("I'm in ViewController.mm line 797\n");
                 first_frame = false;
                 if(!first_frame && keyframe_freq % LOOP_FREQ == 0)
                 {
@@ -824,7 +865,7 @@ bool start_global_optimization = false;
                     
                 }
                 else
-                {
+                {   
                     first_frame = false;
                 }
                 // update loop info
@@ -1037,7 +1078,7 @@ vector<IMU_MSG> gyro_buf;  // for Interpolation
                                         withHandler:^(CMAccelerometerData *latestAcc, NSError *error)
      {
          double header = motionManager.deviceMotion.timestamp;
-         motionManager.deviceMotion.attitude.roll * 180.0 / M_PI,  //pitch for vins
+         motionManager.deviceMotion.attitude.roll * 180.0 / M_PI;  //pitch for vins
          motionManager.deviceMotion.attitude.pitch * 180.0 / M_PI;  //roll for vins
          if(imu_prepare<10)
          {
@@ -1085,8 +1126,10 @@ vector<IMU_MSG> gyro_buf;  // for Interpolation
              imu_msg->header = cur_acc->header;
              imu_msg->acc = cur_acc->acc;
              imu_msg->gyr = gyro_buf[0].gyr + (cur_acc->header - gyro_buf[0].header)*(gyro_buf[1].gyr - gyro_buf[0].gyr)/(gyro_buf[1].header - gyro_buf[0].header);
-             //printf("imu gyro update %lf %lf %lf\n", gyro_buf[0].header, imu_msg->header, gyro_buf[1].header);
-             //printf("imu inte update %lf %lf %lf %lf\n", imu_msg->header, gyro_buf[0].gyr.x(), imu_msg->gyr.x(), gyro_buf[1].gyr.x());
+             printf("=========================I'm in line 1126==========================");
+             printf("\n imu gyro update %lf %lf %lf\n", gyro_buf[0].header, imu_msg->header, gyro_buf[1].header);
+             printf("\n imu inte update %lf %lf %lf %lf\n", imu_msg->header, gyro_buf[0].gyr.x(), imu_msg->gyr.x(), gyro_buf[1].gyr.x());
+             printf("===========================End line 1126============================");
          }
          else
          {
@@ -1792,6 +1835,12 @@ DeviceType deviceName()
     {
         printf("Device iPad pro 12.9\n");
         device_type = iPadPro129;
+    }
+    else if(([device compare:@"iPhone10,3"] == NSOrderedSame) ||
+            ([device compare:@"iPhone10,6"] == NSOrderedSame))
+    {
+        printf("Device iPhoneX\n");
+        device_type = iPhoneX;
     }
     else
     {

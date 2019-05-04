@@ -1,5 +1,13 @@
 #include "keyframe.h"
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <vector>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
+void sendVectorOverNetwork(std::vector<std::string> vec);
 
 KeyFrame::KeyFrame(double _header, int _global_index, Eigen::Vector3d _T_w_i, Eigen::Matrix3d _R_w_i,
                    cv::Mat &_image, const char *_brief_pattern_file, const int _segment_index)
@@ -124,9 +132,13 @@ double round(double r)
 {
     return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
 }
-
+int keyframe_cnt=1000;
+std::vector<std::string> txtout;
 void KeyFrame::buildKeyFrameFeatures(VINS &vins)
 {
+    keyframe_cnt += 1;
+    printf(std::to_string(keyframe_cnt).c_str());
+    txtout.push_back(std::to_string(keyframe_cnt));
     for (auto &it_per_id : vins.f_manager.feature)
     {
         it_per_id.used_num = it_per_id.feature_per_frame.size();
@@ -142,16 +154,75 @@ void KeyFrame::buildKeyFrameFeatures(VINS &vins)
             point_uv.y() = FOCUS_LENGTH_Y * point.y()/point.z() + PY;
             measurements.push_back(cv::Point2f(point_uv.x(), point_uv.y()));
             pts_normalize.push_back(cv::Point2f(point.x()/point.z(), point.y()/point.z()));
-            
+            txtout.push_back(std::to_string(point.x()));
+            txtout.push_back(std::to_string(point.y()));
+            txtout.push_back(std::to_string(point.z()));
             features_id.push_back(it_per_id.feature_id);
             //features 3D pos from first measurement and inverse depth
             Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
             point_clouds.push_back(vins.Rs[it_per_id.start_frame] * (vins.ric * pts_i + vins.tic) + vins.Ps[it_per_id.start_frame]);
         }
     }
+//    std::vector<std::string> example;
+//    example.push_back("this");
+//    example.push_back("is");
+//    example.push_back("a");
+//    example.push_back("test");
+    //printf(example[0].c_str());
+    //printf(decltype(txtout));
+    //sendVectorOverNetwork(txtout);
+    printf("===========================Finish first Keyframe===========================");
+//    std::ofstream output_file("/Users/elena/Desktop/output.txt");
+//    std::ostream_iterator<std::string> output_iterator(output_file, "\n");
+//    std::copy(example.begin(), example.end(), output_iterator);
+    
+//    printf(example[0].c_str());
+    //    std::string input = "hello";
+    //    std::ofstream out("/Users/elena/Desktop/output.txt");
+    //    out << input;
+    //    out.close();
     measurements_origin  = measurements;
     point_clouds_origin = point_clouds;
     features_id_origin = features_id;
+}
+
+void sendVectorOverNetwork(std::vector<std::string> vec) {
+    struct sockaddr_in address;
+    int sock = 0, valread;
+    struct sockaddr_in serv_addr;
+    char *hello = "Hello from client";
+    char buffer[1024] = {0};
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        printf("\n Socket creation error \n");
+        return;
+    }
+    
+    memset(&serv_addr, '0', sizeof(serv_addr));
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(8888);
+    
+    // Convert IPv4 and IPv6 addresses from text to binary form
+//    if(inet_pton(AF_INET, "10.3.140.103", &serv_addr.sin_addr)<=0)
+    if(inet_pton(AF_INET, "192.168.1.176", &serv_addr.sin_addr)<=0)
+    {
+        printf("\nInvalid address/ Address not supported \n");
+        return;
+    }
+    
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\nConnection Failed \n");
+        return;
+    }
+    
+    const char* newline = "\n";
+    for (int i = 0; i < vec.size(); i++) {
+        send(sock, vec[i].c_str(), vec[i].size(), 0);
+        send(sock, newline, 1, 0);
+    }
+    
 }
 
 /**

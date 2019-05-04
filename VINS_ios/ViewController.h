@@ -19,6 +19,8 @@
 #include "keyframe.h"
 #include "loop_closure.h"
 #include "keyfame_database.h"
+
+
 #import <sys/utsname.h>
 
 @interface ViewController : UIViewController<CvVideoCameraDelegate,UITextViewDelegate>
@@ -40,6 +42,12 @@
 @property (nonatomic, strong) CvVideoCamera* videoCamera;
 @property (nonatomic, strong) IBOutlet UIImageView* imageView;
 @property (nonatomic, strong) IBOutlet UIImageView* featureImageView;
+
+
+
+@property (strong, nonatomic) UIAlertView *myAlertView;
+
+
 
 @property (weak, nonatomic) IBOutlet UIButton *loopButton;
 @property (weak, nonatomic) IBOutlet UIButton *reinitButton;
