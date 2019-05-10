@@ -149,17 +149,29 @@ void KeyFrame::buildKeyFrameFeatures(VINS &vins)
         {
             //features current measurements
             Vector3d point = it_per_id.feature_per_frame[WINDOW_SIZE - 2 - it_per_id.start_frame].point;
+//            txtout.push_back(std::to_string(point.x()));
+//            txtout.push_back(std::to_string(point.y()));
+//            txtout.push_back(std::to_string(point.z()));
+            
+            
             Vector2d point_uv;
             point_uv.x() = FOCUS_LENGTH_X * point.x()/point.z() + PX;
             point_uv.y() = FOCUS_LENGTH_Y * point.y()/point.z() + PY;
             measurements.push_back(cv::Point2f(point_uv.x(), point_uv.y()));
             pts_normalize.push_back(cv::Point2f(point.x()/point.z(), point.y()/point.z()));
-            txtout.push_back(std::to_string(point.x()));
-            txtout.push_back(std::to_string(point.y()));
-            txtout.push_back(std::to_string(point.z()));
+            
             features_id.push_back(it_per_id.feature_id);
             //features 3D pos from first measurement and inverse depth
             Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
+            printf("======================================TRYOUT START=================================");
+            printf(std::to_string(pts_i.x()).c_str());
+            printf(std::to_string(pts_i.y()).c_str());
+            printf("==================================Z=========================================");
+            printf(std::to_string(pts_i.z()).c_str());
+            printf("======================================TRYOUT END=================================");
+            txtout.push_back(std::to_string(pts_i.x()));
+            txtout.push_back(std::to_string(pts_i.y()));
+            txtout.push_back(std::to_string(pts_i.z()));
             point_clouds.push_back(vins.Rs[it_per_id.start_frame] * (vins.ric * pts_i + vins.tic) + vins.Ps[it_per_id.start_frame]);
         }
     }
@@ -170,7 +182,7 @@ void KeyFrame::buildKeyFrameFeatures(VINS &vins)
 //    example.push_back("test");
     //printf(example[0].c_str());
     //printf(decltype(txtout));
-    //sendVectorOverNetwork(txtout);
+   // sendVectorOverNetwork(txtout);
     printf("===========================Finish first Keyframe===========================");
 //    std::ofstream output_file("/Users/elena/Desktop/output.txt");
 //    std::ostream_iterator<std::string> output_iterator(output_file, "\n");
@@ -205,7 +217,8 @@ void sendVectorOverNetwork(std::vector<std::string> vec) {
     
     // Convert IPv4 and IPv6 addresses from text to binary form
 //    if(inet_pton(AF_INET, "10.3.140.103", &serv_addr.sin_addr)<=0)
-    if(inet_pton(AF_INET, "192.168.1.176", &serv_addr.sin_addr)<=0)
+//    if(inet_pton(AF_INET, "192.168.1.176", &serv_addr.sin_addr)<=0)
+    if(inet_pton(AF_INET, "192.168.0.9", &serv_addr.sin_addr)<=0)
     {
         printf("\nInvalid address/ Address not supported \n");
         return;
@@ -358,7 +371,7 @@ void KeyFrame::updateOriginPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matr
 }
 
 void KeyFrame::getPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i)
-{
+{   //printf("loop current T: %2lf %2lf %2lf\n", T_w_i(0),T_w_i(1),T_w_i(2));
     _T_w_i = T_w_i;
     _R_w_i = R_w_i;
 }
